@@ -8,7 +8,7 @@ from random import randint
 
 
 class Game(tk.Tk):
-    def __init__(self, first="user", alternate="y"):
+    def __init__(self, first="USER", alternate="y"):
         super().__init__()
         self.resizable(False, False)
         self.watch = Watch(self)
@@ -70,6 +70,8 @@ class Game(tk.Tk):
         label.place(x=self.boxwidth // 2, y=self.boxheight // 2, anchor="center")
 
         self.array_update(frame)
+
+        self.wincheck()
         self.turn ^= 1
         self.switch()
 
@@ -110,6 +112,8 @@ class Game(tk.Tk):
 
         self.array[row, col] = 1
         print(self.array)
+
+        self.wincheck()
         self.turn ^= 1
         self.switch()
 
@@ -175,5 +179,6 @@ class Game(tk.Tk):
             self.switch()
 
 
-g = Game(first="USER")
-g.mainloop()
+if __name__ == "__main__":
+    g = Game(first="BOT")
+    g.mainloop()
