@@ -8,7 +8,7 @@ from random import randint
 
 
 class Game(tk.Tk):
-    def __init__(self, first=0, alternate="n"):
+    def __init__(self, first="user", alternate="y"):
         super().__init__()
         self.resizable(False, False)
         self.watch = Watch(self)
@@ -16,32 +16,28 @@ class Game(tk.Tk):
         self.board = Board(self)
         self.boxes = self.board.boxes
         abox = list(self.boxes.values())[0]
-        self.boxwidth = abox["width"]
-        self.boxheight = abox["height"]
+        self.boxwidth, self.boxheight = abox["width"], abox["height"]
 
-        self.first = first
+        self.playerdict = {0: "USER", 1: "BOT", "USER": 0, "BOT": 1}
+        self.turn = self.playerdict[first.upper()]
         self.alternate = alternate
         self.symbols = ["ticx.png", "ticcircle.png"]
-        self.playerdict = {0: "USER", 1: "BOT"}
 
         self.array = np.full((3, 3), 2, dtype="uint8")
 
-        self.switch(player=first)
+        self.switch()
 
-    def switch(self, player):
+    def switch(self):
         if 2 not in self.array:
             self.retry_message("tie")
 
-        elif self.wincheck(who=player ^ 1):
-            self.retry_message("vic")
-
         else:
-            if player == 0:
+            if self.turn == 0:
                 for key in self.boxes:
                     self.boxes[key].bind("<Button-1>", self.userplay)
                     self.boxes[key].bind("<Enter>", self.hover)
                     self.boxes[key].bind("<Leave>", self.hover)
-            elif player == 1:
+            elif self.turn == 1:
                 for key in self.boxes:
                     self.boxes[key].bind("<Button-1>", lambda e: None)
                 self.after(1000, self.botplay)
@@ -56,12 +52,8 @@ class Game(tk.Tk):
         else:
             frm["bg"] = "white"
 
-    def get_image(self, who):
-        if who == "user":
-            symbol = self.symbols[0]
-        elif who == "bot":
-            symbol = self.symbols[1]
-
+    def get_image(self):
+        symbol = self.symbols[self.turn]
         imgopen = Image.open(symbol)
         resized = imgopen.resize(
             (self.boxwidth - 20, self.boxheight - 20), Image.ANTIALIAS
@@ -70,7 +62,7 @@ class Game(tk.Tk):
         return ImageTk.PhotoImage(resized)
 
     def userplay(self, event):
-        img = self.get_image("user")
+        img = self.get_image()
 
         frame = event.widget
         label = tk.Label(frame, image=img, bg="white")
@@ -78,7 +70,8 @@ class Game(tk.Tk):
         label.place(x=self.boxwidth // 2, y=self.boxheight // 2, anchor="center")
 
         self.array_update(frame)
-        self.switch(player=1)
+        self.turn ^= 1
+        self.switch()
 
     def array_update(self, frame):
         gridx, gridy = (
@@ -90,22 +83,25 @@ class Game(tk.Tk):
         print(self.array)
 
     def botplay(self):
-        img = self.get_image("bot")
+        img = self.get_image()
 
         if self.array[1, 1] == 2:  # if center is empty
             row = 1
             col = 1
 
-        elif self.present2() is not None:  # possible victory in next turn?
-            print("BLOCK/ATTACK")
-            row, col = self.present2()
+        elif coord := self.present2(1):  # possible victory for self?
+            print("FINISH")
+            row, col = coord
+
+        elif coord := self.present2(0):  # possible victory for user?
+            print("BLOCK")
+            row, col = coord
 
         else:  # random move
             print("RANDOM")
             locs = np.where(self.array == 2)
             coords = list(zip(locs[0], locs[1]))
-            toplay = randint(0, len(coords))
-            row, col = coords[toplay]
+            row, col = coords[randint(0, len(coords) - 1)]
 
         leframe = self.boxes[f"{row},{col}"]
         label = tk.Label(leframe, image=img, bg="white")
@@ -114,33 +110,31 @@ class Game(tk.Tk):
 
         self.array[row, col] = 1
         print(self.array)
-        self.switch(player=0)
+        self.turn ^= 1
+        self.switch()
 
-    def present2(self):
+    def present2(self, who):
         for i in range(3):
-            subarr = self.array[i]
-            if 2 in subarr:
-                if (subarr == 0).sum() == 2 or (subarr == 1).sum() == 2:
-                    return [i, subarr.tolist().index(2)]
-            subarr = self.array[:, i]
-            if 2 in subarr:
-                if (subarr == 0).sum() == 2 or (subarr == 1).sum() == 2:
-                    return [subarr.tolist().index(2), i]
+            subarr = list(self.array[i])
+            if 2 in subarr and subarr.count(who) == 2:
+                return [i, subarr.index(2)]
+
+            subarr = list(self.array[:, i])
+            if 2 in subarr and subarr.count(who) == 2:
+                return [subarr.index(2), i]
 
         subarr = [self.array[i, i] for i in range(3)]
-        if 2 in subarr:
-            if subarr.count(0) == 2 or subarr.count(1) == 2:
-                return [subarr.index(2)] * 2
+        if 2 in subarr and subarr.count(who) == 2:
+            return [subarr.index(2)] * 2
 
         subarr = [self.array[i, abs(i - 2)] for i in range(3)]
-        if 2 in subarr:
-            if subarr.count(0) == 2 or subarr.count(1) == 2:
-                row = subarr.index(2)
-                return [row, abs(row - 2)]
+        if 2 in subarr and subarr.count(who) == 2:
+            row = subarr.index(2)
+            return [row, abs(row - 2)]
 
         return None
 
-    def wincheck(self, who):
+    def wincheck(self):
         subarrs = []
         for i in range(3):
             subarrs.append(self.array[i].tolist())
@@ -149,9 +143,8 @@ class Game(tk.Tk):
         subarrs.append([self.array[i, abs(i - 2)] for i in range(3)])
 
         for trio in subarrs:
-            if trio.count(0) == 3 or trio.count(1) == 3:
-                self.winner = self.playerdict[who]
-                return True
+            if trio.count(self.turn) == 3:
+                self.retry_message("vic")
 
         return None
 
@@ -159,7 +152,7 @@ class Game(tk.Tk):
         if endtype == "tie":
             mes = "Its a tie!\n\nWould you like to play again?"
         elif endtype == "vic":
-            mes = f"{self.winner} won the game!\n\nWould you like to play again?"
+            mes = f"{self.playerdict[self.turn]} won the game!\n\nWould you like to play again?"
 
         response = messagebox.askyesno(title="Game Over!", message=mes)
 
@@ -176,10 +169,11 @@ class Game(tk.Tk):
                 child.destroy()
         self.array = np.full((3, 3), 2, dtype="uint8")
         if "y" in self.alternate:
-            self.switch(player=self.first ^ 1)
-        else:
-            self.switch(player=self.first)
+            self.turn ^= 1
+            self.switch()
+        elif "n" in self.alternate:
+            self.switch()
 
 
-g = Game(first=0)
+g = Game(first="USER")
 g.mainloop()
