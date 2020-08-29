@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
-from widgets import Board, Watch
+from widgets import Board, Watch, Tally
 
 import numpy as np
 from random import randint
@@ -12,6 +12,7 @@ class Game(tk.Tk):
         super().__init__()
         self.resizable(False, False)
         self.watch = Watch(self)
+        self.tally = Tally(self)
 
         self.board = Board(self)
         self.boxes = self.board.boxes
@@ -103,6 +104,7 @@ class Game(tk.Tk):
             print("RANDOM")
             locs = np.where(self.array == 2)
             coords = list(zip(locs[0], locs[1]))
+            print(coords)
             row, col = coords[randint(0, len(coords) - 1)]
 
         leframe = self.boxes[f"{row},{col}"]
@@ -157,12 +159,13 @@ class Game(tk.Tk):
             mes = "Its a tie!\n\nWould you like to play again?"
         elif endtype == "vic":
             mes = f"{self.playerdict[self.turn]} won the game!\n\nWould you like to play again?"
+            self.tally.increment(self.playerdict[self.turn])
 
         response = messagebox.askyesno(title="Game Over!", message=mes)
 
-        if response is True:
+        if response:
             self.reset()
-        elif response is False:
+        else:
             self.destroy()
             print("DONE")
 
@@ -174,9 +177,7 @@ class Game(tk.Tk):
         self.array = np.full((3, 3), 2, dtype="uint8")
         if "y" in self.alternate:
             self.turn ^= 1
-            self.switch()
-        elif "n" in self.alternate:
-            self.switch()
+        self.switch()
 
 
 if __name__ == "__main__":

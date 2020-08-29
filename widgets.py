@@ -6,7 +6,7 @@ class Board(tk.Frame):
         super().__init__(root)
         self.boxes = {}
 
-        self.grid(row=0, column=0, sticky="nsew")
+        self.grid(row=0, column=0, rowspan=2, sticky="ns")
 
         for col in range(3):
             for row in range(3):
@@ -33,7 +33,7 @@ class Watch(tk.Frame):
             highlightbackground="black",
             highlightthickness=1,
         )
-        self.grid(row=0, column=1, sticky="n")
+        self.grid(row=0, column=1, sticky="ne")
 
         self.timecount = 0
         self.setup_watch()
@@ -80,3 +80,69 @@ class Watch(tk.Frame):
     def reset_watch(self):
         self.timecount = 0
 
+
+class staticLabel(tk.Label):
+    def __init__(self, master, text, relPos: tuple):
+        super().__init__(master)
+        self.config(
+            text=text, font=("Lucida Grande", 20, "bold", "underline"), bg="white"
+        )
+        self.place(relx=relPos[0], rely=relPos[1], anchor="center")
+
+
+class Tally(tk.Frame):
+    def __init__(self, root):
+        super().__init__(root)
+        self.configure(
+            width=300,
+            height=300,
+            bg="white",
+            highlightbackground="black",
+            highlightthickness=1,
+        )
+        self.grid(row=1, column=1, sticky="s")
+
+        self.userScore = tk.IntVar(value=0)
+        self.botScore = tk.IntVar(value=0)
+        self.totalScore = tk.IntVar(value=0)
+
+        self.setup_tally()
+
+    def setup_tally(self):
+        staticLabel(self, "Game Status", (0.5, 0.1))
+
+        staticOffset = 0.3
+        
+        staticLabel(self, "USER", (staticOffset, 0.3))
+        staticLabel(self, "BOT", (staticOffset, 0.5))
+        staticLabel(self, "TOTAL", (staticOffset, 0.7))
+
+        dynamicOffset = 0.6
+        
+        tk.Label(
+            self,
+            textvariable=self.userScore,
+            bg="white",
+            font=("Lucida Grande", 20, "bold"),
+        ).place(relx=dynamicOffset, rely=0.3, anchor="center")
+
+        tk.Label(
+            self,
+            textvariable=self.botScore,
+            bg="white",
+            font=("Lucida Grande", 20, "bold"),
+        ).place(relx=dynamicOffset, rely=0.5, anchor="center")
+
+        tk.Label(
+            self,
+            textvariable=self.totalScore,
+            bg="white",
+            font=("Lucida Grande", 20, "bold"),
+        ).place(relx=dynamicOffset, rely=0.7, anchor="center")
+
+    def increment(self, who: str):
+        self.totalScore.set(self.totalScore.get() + 1)
+        if who.lower == "user":
+            self.userScore.set(self.userScore.get() + 1)
+        else:
+            self.botScore.set(self.botScore.get() + 1)
