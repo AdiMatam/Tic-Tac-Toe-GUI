@@ -8,7 +8,7 @@ from random import randint
 
 
 class Game(tk.Tk):
-    def __init__(self, first="USER", alternate="y"):
+    def __init__(self, first="USER"):
         super().__init__()
         self.resizable(False, False)
         self.watch = Watch(self)
@@ -21,8 +21,8 @@ class Game(tk.Tk):
 
         self.playerdict = {0: "USER", 1: "BOT", "USER": 0, "BOT": 1}
         self.turn = self.playerdict[first.upper()]
-        self.alternate = alternate
-        self.symbols = ["ticx.png", "ticcircle.png"]
+
+        self.symbols = [r"imgs\ticx.png", r"imgs\ticcircle.png"]
 
         self.array = np.full((3, 3), 2, dtype="uint8")
 
@@ -175,8 +175,7 @@ class Game(tk.Tk):
             for child in frm.winfo_children():
                 child.destroy()
         self.array = np.full((3, 3), 2, dtype="uint8")
-        if "y" in self.alternate:
-            self.turn ^= 1
+
         self.switch()
 
 

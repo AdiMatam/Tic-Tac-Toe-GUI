@@ -1,5 +1,6 @@
 import gamegui as g
 
-a = g.Game(first="USER", alternate="y")
+# first = "USER" or "BOT"
+a = g.Game(first="USER")
 a.mainloop()
 
