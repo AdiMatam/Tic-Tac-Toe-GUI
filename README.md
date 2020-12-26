@@ -3,6 +3,7 @@ Simple tic-tac-toe game with tkinter module in python.
 PLAYER vs BOT
 
 ## Dependencies
+Run `pip install -r requirements.txt` in terminal to install libraries.
 Pillow: Used to place images on display (pip install pillow)  
 Numpy: Used to manage the board and predict moves (pip install numpy)
 
